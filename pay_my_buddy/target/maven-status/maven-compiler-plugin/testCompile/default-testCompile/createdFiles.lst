@@ -1,0 +1,13 @@
+com\pay_my_buddy\controller\AuthControllerTest.class
+com\pay_my_buddy\config\SecurityConfigTest.class
+com\pay_my_buddy\service\TransactionServiceTest.class
+com\pay_my_buddy\controller\UserControllerTest.class
+com\pay_my_buddy\security\CustomUserDetailsTest.class
+com\pay_my_buddy\controller\TransactionControllerTest.class
+com\pay_my_buddy\controller\CompteControllerTest.class
+com\pay_my_buddy\controller\ProfileControllerTest.class
+com\pay_my_buddy\service\UserServiceTest.class
+com\pay_my_buddy\service\CompteServiceTest.class
+com\pay_my_buddy\service\ConnectionServiceTest.class
+com\pay_my_buddy\security\CustomUserDetailsServiceTest.class
+com\pay_my_buddy\controller\FriendControllerTest.class

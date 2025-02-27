@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Transfert - Pay My Buddy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+
+<div class="container">
+    <h2 class="text-primary">Page de transfert</h2>
+
+    <!-- Navigation -->
+    <nav class="d-flex justify-content-between align-items-center mb-4">
+        <div class="h3">Pay My Buddy</div>
+        <nav>
+            <a th:href="@{/transfer}">Transférer</a>
+            <a th:href="@{/profile}">Profil</a>
+            <a th:href="@{/add-friend}">Ajouter relation</a>
+            <a th:href="@{/logout}" class="text-danger">Se déconnecter</a>
+        </nav>
+    </nav>
+
+    <!-- Messages de succès / erreur -->
+    <div th:if="${successMessage}" class="alert alert-success">
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger">
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- Formulaire de transfert -->
+    <div class="card p-4 mb-4">
+        <form th:action="@{/transfer}" method="post" class="d-flex gap-3 align-items-center">
+            <select name="friendEmail" class="form-select" required>
+                <option value="" selected disabled>Sélectionner une relation</option>
+                <option th:each="friend : ${friends}" th:value="${friend.email}" th:text="${friend.username}"></option>
+            </select>
+            <input type="text" name="description" class="form-control" placeholder="Description" required>
+            <input type="number" name="amount" class="form-control" min="0.01" step="0.01" placeholder="0€" required>
+            <input type="hidden" name="senderId" th:value="${user.id}" required>
+            <button type="submit" class="btn btn-primary">Payer</button>
+        </form>
+    </div>
+
+    <!-- Liste des transactions -->
+    <div class="card p-4">
+        <h4 class="mb-3">Mes Transactions</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Relations</th>
+                    <th>Description</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="transaction : ${transactions}">
+                    <td th:text="${transaction.receiver.email == user.email} ? ${transaction.sender.username} : ${transaction.receiver.username}"></td>
+                    <td th:text="${transaction.description}"></td>
+                    <td th:text="${transaction.amount} + '€'"></td>
+                </tr>
+                <tr th:if="${transactions.isEmpty()}">
+                    <td colspan="3" class="text-center text-muted">Aucune transaction trouvée.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>
