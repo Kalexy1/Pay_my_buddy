@@ -12,6 +12,12 @@ import jakarta.validation.Valid;
 import java.math.BigInteger;
 import java.util.List;
 
+/**
+ * Contrôleur REST pour la gestion des utilisateurs.
+ * <p>
+ * Cette classe fournit des endpoints pour récupérer, mettre à jour et gérer les relations d'amitié entre utilisateurs.
+ * </p>
+ */
 @RestController
 @RequestMapping("/users")
 @Validated
@@ -21,12 +27,20 @@ public class UserController {
 
     private final UserService userService;
 
+    /**
+     * Constructeur de la classe UserController.
+     *
+     * @param userService Service de gestion des utilisateurs.
+     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
     /**
-     * 🔎 Récupérer un utilisateur par son email.
+     * Récupère un utilisateur par son email.
+     *
+     * @param email Email de l'utilisateur recherché.
+     * @return {@link ResponseEntity} contenant l'utilisateur ou un message d'erreur si non trouvé.
      */
     @GetMapping("/{email}")
     public ResponseEntity<?> getUserByEmail(@PathVariable String email) {
@@ -42,7 +56,11 @@ public class UserController {
     }
 
     /**
-     * ➕ Ajouter un ami à l'utilisateur.
+     * Ajoute un ami à la liste des amis de l'utilisateur.
+     *
+     * @param userId      Identifiant de l'utilisateur.
+     * @param friendEmail Email de l'ami à ajouter.
+     * @return {@link ResponseEntity} contenant un message de succès ou d'erreur.
      */
     @PostMapping("/{userId}/addFriend/{friendEmail}")
     public ResponseEntity<?> addFriend(@PathVariable BigInteger userId, @PathVariable String friendEmail) {
@@ -58,7 +76,11 @@ public class UserController {
     }
 
     /**
-     * ❌ Supprimer un ami de la liste des relations de l'utilisateur.
+     * Supprime un ami de la liste des relations de l'utilisateur.
+     *
+     * @param userId      Identifiant de l'utilisateur.
+     * @param friendEmail Email de l'ami à supprimer.
+     * @return {@link ResponseEntity} contenant un message de succès ou d'erreur.
      */
     @DeleteMapping("/{userId}/removeFriend/{friendEmail}")
     public ResponseEntity<?> removeFriend(@PathVariable BigInteger userId, @PathVariable String friendEmail) {
@@ -74,7 +96,10 @@ public class UserController {
     }
 
     /**
-     * 👥 Récupérer la liste des amis d'un utilisateur.
+     * Récupère la liste des amis d'un utilisateur.
+     *
+     * @param userId Identifiant de l'utilisateur.
+     * @return {@link ResponseEntity} contenant la liste des amis ou un message si aucun ami trouvé.
      */
     @GetMapping("/{userId}/friends")
     public ResponseEntity<?> getUserFriends(@PathVariable BigInteger userId) {
@@ -93,7 +118,13 @@ public class UserController {
     }
 
     /**
-     * 🔄 Mettre à jour les informations de l'utilisateur (nom, email et mot de passe).
+     * Met à jour les informations de l'utilisateur (nom, email et mot de passe).
+     *
+     * @param userId      Identifiant de l'utilisateur.
+     * @param newUsername Nouveau nom d'utilisateur (optionnel).
+     * @param newEmail    Nouveau email de l'utilisateur (optionnel).
+     * @param newPassword Nouveau mot de passe (optionnel).
+     * @return {@link ResponseEntity} contenant un message de succès ou d'erreur.
      */
     @PutMapping("/{userId}/update")
     public ResponseEntity<String> updateUser(

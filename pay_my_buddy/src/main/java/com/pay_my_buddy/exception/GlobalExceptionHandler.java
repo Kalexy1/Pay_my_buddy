@@ -10,11 +10,24 @@ import org.springframework.web.context.request.WebRequest;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Gestionnaire global des exceptions pour l'application.
+ * <p>
+ * Cette classe intercepte et gère les exceptions spécifiques afin de fournir
+ * des réponses HTTP adaptées aux erreurs rencontrées.
+ * </p>
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * Gestion des exceptions pour les entités non trouvées.
+     * Gère les exceptions pour les ressources non trouvées.
+     * <p>
+     * Retourne une réponse HTTP 404 lorsque l'entité demandée est introuvable.
+     * </p>
+     *
+     * @param ex L'exception {@link ResourceNotFoundException}.
+     * @return Une réponse HTTP 404 avec un message d'erreur.
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<String> handleResourceNotFoundException(ResourceNotFoundException ex) {
@@ -22,7 +35,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Gestion des exceptions pour les arguments invalides dans les requêtes.
+     * Gère les exceptions de validation des arguments de requête.
+     * <p>
+     * Retourne une réponse HTTP 400 avec une liste des erreurs de validation des champs.
+     * </p>
+     *
+     * @param ex L'exception {@link MethodArgumentNotValidException}.
+     * @return Une réponse HTTP 400 contenant les erreurs de validation des champs.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationException(MethodArgumentNotValidException ex) {
@@ -34,7 +53,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Gestion des exceptions génériques.
+     * Gère les exceptions générales de l'application.
+     * <p>
+     * Retourne une réponse HTTP 500 en cas d'erreur interne du serveur.
+     * </p>
+     *
+     * @param ex      L'exception {@link Exception} capturée.
+     * @param request L'objet {@link WebRequest} contenant les détails de la requête.
+     * @return Une réponse HTTP 500 avec un message d'erreur.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGlobalException(Exception ex, WebRequest request) {
@@ -43,7 +69,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Gestion des exceptions de type IllegalArgumentException.
+     * Gère les exceptions de type {@link IllegalArgumentException}.
+     * <p>
+     * Retourne une réponse HTTP 400 lorsque les arguments fournis sont invalides.
+     * </p>
+     *
+     * @param ex L'exception {@link IllegalArgumentException}.
+     * @return Une réponse HTTP 400 avec un message d'erreur.
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {

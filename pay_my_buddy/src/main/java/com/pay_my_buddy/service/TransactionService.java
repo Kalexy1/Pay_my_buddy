@@ -15,21 +15,59 @@ import com.pay_my_buddy.model.User;
 import com.pay_my_buddy.repository.TransactionRepository;
 import com.pay_my_buddy.repository.UserRepository;
 
+/**
+ * Service gérant les transactions financières entre utilisateurs.
+ * <p>
+ * Permet d'effectuer des paiements entre utilisateurs et de récupérer l'historique des transactions.
+ * </p>
+ */
 @Service
 public class TransactionService {
 
+    /**
+     * Logger pour suivre les opérations de transaction.
+     */
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
+    /**
+     * Référentiel des transactions.
+     */
     private final TransactionRepository transactionRepository;
+
+    /**
+     * Service de gestion des comptes utilisateurs.
+     */
     private final CompteService compteService;
+
+    /**
+     * Référentiel des utilisateurs.
+     */
     private final UserRepository userRepository;
 
+    /**
+     * Constructeur du service {@code TransactionService}.
+     *
+     * @param transactionRepository Référentiel des transactions.
+     * @param compteService Service de gestion des comptes.
+     * @param userRepository Référentiel des utilisateurs.
+     */
     public TransactionService(TransactionRepository transactionRepository, CompteService compteService, UserRepository userRepository) {
         this.transactionRepository = transactionRepository;
         this.compteService = compteService;
         this.userRepository = userRepository;
     }
 
+    /**
+     * Effectue un transfert d'argent entre deux utilisateurs.
+     *
+     * @param sender Expéditeur de la transaction.
+     * @param receiver Destinataire de la transaction.
+     * @param amount Montant à transférer.
+     * @param description Description de la transaction.
+     * @return La transaction créée.
+     * @throws IllegalArgumentException Si l'expéditeur et le destinataire sont identiques ou si les fonds sont insuffisants.
+     * @throws RuntimeException En cas d'erreur inattendue.
+     */
     @Transactional
     public Transaction sendMoney(User sender, User receiver, BigDecimal amount, String description) {
         try {
@@ -57,13 +95,23 @@ public class TransactionService {
             return transaction;
         } catch (IllegalArgumentException e) {
             logger.warn("Échec de la transaction entre {} et {}: {}", sender.getEmail(), receiver.getEmail(), e.getMessage());
-            throw e; // Re-throw specific exceptions to inform the caller
+            throw e; 
         } catch (Exception e) {
             logger.error("Erreur inattendue lors de la transaction entre {} et {}: {}", sender.getEmail(), receiver.getEmail(), e.getMessage());
             throw new RuntimeException("Une erreur est survenue lors de la transaction.");
         }
     }
 
+    /**
+     * Crée une transaction entre deux utilisateurs.
+     *
+     * @param sender Expéditeur de la transaction.
+     * @param receiver Destinataire de la transaction.
+     * @param description Description de la transaction.
+     * @param amount Montant de la transaction.
+     * @return La transaction créée.
+     * @throws IllegalArgumentException Si l'expéditeur et le destinataire sont identiques ou si les fonds sont insuffisants.
+     */
     public Transaction createTransaction(User sender, User receiver, String description, double amount) {
         if (sender.equals(receiver)) {
             throw new IllegalArgumentException("Impossible d'envoyer de l'argent à soi-même.");
@@ -89,6 +137,13 @@ public class TransactionService {
         return transaction;
     }
 
+    /**
+     * Récupère l'historique des transactions d'un utilisateur.
+     *
+     * @param userId Identifiant de l'utilisateur.
+     * @return Liste des transactions impliquant l'utilisateur.
+     * @throws ResourceNotFoundException Si l'utilisateur est introuvable.
+     */
     public List<Transaction> getUserTransactions(BigInteger userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec ID : " + userId));
@@ -97,7 +152,10 @@ public class TransactionService {
     }
 
     /**
-     * Récupérer l'historique des transactions d'un utilisateur (en tant qu'expéditeur ou destinataire).
+     * Récupère l'historique des transactions d'un utilisateur (en tant qu'expéditeur ou destinataire).
+     *
+     * @param user Utilisateur dont on veut récupérer les transactions.
+     * @return Liste des transactions associées à l'utilisateur.
      */
     public List<Transaction> getTransactionsForUser(User user) {
         return transactionRepository.findBySenderOrReceiver(user, user);

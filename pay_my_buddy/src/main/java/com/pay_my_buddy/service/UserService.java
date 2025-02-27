@@ -13,13 +13,42 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigInteger;
 import java.util.List;
 
+/**
+ * Service gérant les opérations liées aux utilisateurs.
+ * <p>
+ * Permet l'enregistrement, l'authentification, la gestion des amis et la mise à jour des informations utilisateur.
+ * </p>
+ */
 @Service
 public class UserService {
+
+    /**
+     * Logger pour suivre les opérations effectuées sur les utilisateurs.
+     */
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
+    /**
+     * Référentiel des utilisateurs.
+     */
     private final UserRepository userRepository;
+
+    /**
+     * Encodeur de mot de passe utilisé pour sécuriser les mots de passe des utilisateurs.
+     */
     private final PasswordEncoder passwordEncoder;
+
+    /**
+     * Service de gestion des comptes associés aux utilisateurs.
+     */
     private final CompteService compteService;
 
+    /**
+     * Constructeur du service {@code UserService}.
+     *
+     * @param userRepository Référentiel des utilisateurs.
+     * @param passwordEncoder Encodeur de mot de passe.
+     * @param compteService Service de gestion des comptes bancaires.
+     */
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, CompteService compteService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -27,7 +56,12 @@ public class UserService {
     }
 
     /**
-     * 🔒 Enregistre un nouvel utilisateur avec un mot de passe crypté et crée son compte bancaire.
+     * Enregistre un nouvel utilisateur avec un mot de passe crypté et crée son compte bancaire.
+     *
+     * @param user L'utilisateur à enregistrer.
+     * @return L'utilisateur enregistré.
+     * @throws IllegalArgumentException Si l'email est déjà utilisé.
+     * @throws RuntimeException Si la création du compte bancaire échoue.
      */
     @Transactional
     public User registerUser(User user) {
@@ -37,11 +71,9 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Sauvegarde de l'utilisateur
         User savedUser = userRepository.save(user);
-        userRepository.flush(); // 🔥 Force l'exécution immédiate de la requête SQL
+        userRepository.flush();
 
-        // ✅ Création du compte bancaire
         Compte compte = compteService.createCompteForUser(savedUser);
         
         if (compte == null) {
@@ -53,7 +85,12 @@ public class UserService {
     }
 
     /**
-     * 🔑 Authentifie un utilisateur avec son email et son mot de passe.
+     * Authentifie un utilisateur avec son email et son mot de passe.
+     *
+     * @param email Email de l'utilisateur.
+     * @param password Mot de passe de l'utilisateur.
+     * @return L'utilisateur authentifié.
+     * @throws IllegalArgumentException Si les identifiants sont incorrects.
      */
     public User authenticate(String email, String password) {
         logger.info("Tentative de connexion pour l'email : {}", email);
@@ -70,7 +107,11 @@ public class UserService {
     }
 
     /**
-     * 📧 Récupère un utilisateur par son email.
+     * Récupère un utilisateur par son email.
+     *
+     * @param email Email de l'utilisateur.
+     * @return L'utilisateur correspondant.
+     * @throws ResourceNotFoundException Si l'utilisateur est introuvable.
      */
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
@@ -81,7 +122,11 @@ public class UserService {
     }
 
     /**
-     * 🔎 Récupère un utilisateur par son ID.
+     * Récupère un utilisateur par son ID.
+     *
+     * @param id Identifiant de l'utilisateur.
+     * @return L'utilisateur correspondant.
+     * @throws ResourceNotFoundException Si l'utilisateur est introuvable.
      */
     public User getUserById(BigInteger id) {
         return userRepository.findById(id)
@@ -92,7 +137,11 @@ public class UserService {
     }
 
     /**
-     * ➕ Ajoute un ami à la liste de connexions d'un utilisateur.
+     * Ajoute un ami à la liste de connexions d'un utilisateur.
+     *
+     * @param userId ID de l'utilisateur.
+     * @param friendEmail Email de l'ami à ajouter.
+     * @throws IllegalArgumentException Si l'utilisateur tente de s'ajouter lui-même ou si l'ami est déjà présent.
      */
     @Transactional
     public void addFriend(BigInteger userId, String friendEmail) {
@@ -115,7 +164,11 @@ public class UserService {
     }
 
     /**
-     * ❌ Supprime un ami de la liste de connexions d'un utilisateur.
+     * Supprime un ami de la liste de connexions d'un utilisateur.
+     *
+     * @param userId ID de l'utilisateur.
+     * @param friendEmail Email de l'ami à supprimer.
+     * @throws IllegalArgumentException Si l'utilisateur ne fait pas partie de la liste d'amis.
      */
     @Transactional
     public void removeFriend(BigInteger userId, String friendEmail) {
@@ -135,7 +188,10 @@ public class UserService {
     }
 
     /**
-     * 👥 Récupère la liste des amis d'un utilisateur.
+     * Récupère la liste des amis d'un utilisateur.
+     *
+     * @param userId ID de l'utilisateur.
+     * @return Liste des amis de l'utilisateur.
      */
     public List<User> getUserFriends(BigInteger userId) {
         User user = getUserById(userId);
@@ -143,7 +199,12 @@ public class UserService {
     }
 
     /**
-     * ✏️ Met à jour les informations d'un utilisateur.
+     * Met à jour les informations d'un utilisateur.
+     *
+     * @param userId ID de l'utilisateur.
+     * @param newUsername Nouveau nom d'utilisateur (optionnel).
+     * @param newEmail Nouvel email (optionnel).
+     * @throws IllegalArgumentException Si l'email est déjà utilisé.
      */
     @Transactional
     public void updateUser(BigInteger userId, String newUsername, String newEmail) {
@@ -164,7 +225,11 @@ public class UserService {
     }
 
     /**
-     * 🔑 Met à jour le mot de passe d'un utilisateur.
+     * Met à jour le mot de passe d'un utilisateur.
+     *
+     * @param userId ID de l'utilisateur.
+     * @param newPassword Nouveau mot de passe.
+     * @throws IllegalArgumentException Si le mot de passe est trop court.
      */
     @Transactional
     public void updatePassword(BigInteger userId, String newPassword) {

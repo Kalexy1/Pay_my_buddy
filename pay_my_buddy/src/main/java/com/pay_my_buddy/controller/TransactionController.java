@@ -13,19 +13,37 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
+/**
+ * Contrôleur gérant les transactions entre utilisateurs.
+ * <p>
+ * Cette classe permet d'afficher la page de transfert et d'effectuer des transactions.
+ * </p>
+ */
 @Controller
 public class TransactionController {
 
     private final TransactionService transactionService;
     private final UserService userService;
 
+    /**
+     * Constructeur de la classe TransactionController.
+     *
+     * @param transactionService Service de gestion des transactions.
+     * @param userService        Service de gestion des utilisateurs.
+     */
     public TransactionController(TransactionService transactionService, UserService userService) {
         this.transactionService = transactionService;
         this.userService = userService;
     }
 
     /**
-     * 🔹 Afficher la page de transfert avec les transactions et amis de l'utilisateur.
+     * Affiche la page de transfert avec l'historique des transactions et la liste des amis.
+     *
+     * @param authentication Informations d'authentification de l'utilisateur connecté.
+     * @param model          Modèle pour transmettre des attributs à la vue.
+     * @param success        Message facultatif indiquant un succès.
+     * @param error          Message facultatif indiquant une erreur.
+     * @return La vue de la page de transfert.
      */
     @GetMapping("/transfer")
     public String showTransferPage(Authentication authentication, Model model,
@@ -51,7 +69,13 @@ public class TransactionController {
     }
 
     /**
-     * 🔹 Effectuer un transfert d'argent entre utilisateurs.
+     * Effectue un transfert d'argent entre l'utilisateur et l'un de ses amis.
+     *
+     * @param senderId    Identifiant de l'expéditeur.
+     * @param friendEmail Email du destinataire.
+     * @param amount      Montant à transférer.
+     * @param description Description de la transaction.
+     * @return Redirection vers la page de transfert avec un message de succès ou d'erreur.
      */
     @PostMapping("/transfer")
     public String sendMoney(@RequestParam BigInteger senderId,

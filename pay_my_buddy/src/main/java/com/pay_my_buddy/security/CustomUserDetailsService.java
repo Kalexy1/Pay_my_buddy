@@ -9,22 +9,46 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Collections;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Service personnalisé pour la gestion de l'authentification des utilisateurs.
+ * <p>
+ * Implémente l'interface {@link UserDetailsService} de Spring Security afin de charger les détails
+ * d'un utilisateur à partir de son adresse email.
+ * </p>
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
+    /**
+     * Logger pour suivre les tentatives d'authentification.
+     */
     private static final Logger logger = LoggerFactory.getLogger(CustomUserDetailsService.class);
 
+    /**
+     * Référentiel des utilisateurs pour récupérer les informations d'authentification.
+     */
     private final UserRepository userRepository;
 
+    /**
+     * Constructeur de la classe {@code CustomUserDetailsService}.
+     *
+     * @param userRepository Référentiel des utilisateurs pour la gestion de l'authentification.
+     */
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Charge un utilisateur par son adresse email.
+     *
+     * @param email L'adresse email de l'utilisateur.
+     * @return Un objet {@link UserDetails} contenant les informations de l'utilisateur.
+     * @throws UsernameNotFoundException Si aucun utilisateur correspondant n'est trouvé.
+     */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         if (email == null || email.trim().isEmpty()) {
@@ -48,5 +72,4 @@ public class CustomUserDetailsService implements UserDetailsService {
                 Collections.singleton(new SimpleGrantedAuthority("USER"))
         );
     }
-
 }

@@ -9,19 +9,40 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
+/**
+ * Service gérant les opérations liées aux comptes des utilisateurs.
+ * <p>
+ * Permet la création, la consultation, le crédit et le débit des comptes.
+ * </p>
+ */
 @Service
 public class CompteService {
+
+    /**
+     * Logger pour suivre les opérations effectuées sur les comptes.
+     */
     private static final Logger logger = LoggerFactory.getLogger(CompteService.class);
+
+    /**
+     * Référentiel pour la gestion des comptes en base de données.
+     */
     private final CompteRepository compteRepository;
 
+    /**
+     * Constructeur du service {@code CompteService}.
+     *
+     * @param compteRepository Référentiel des comptes pour la gestion des opérations bancaires.
+     */
     public CompteService(CompteRepository compteRepository) {
         this.compteRepository = compteRepository;
     }
 
     /**
-     * Créer un compte pour un nouvel utilisateur avec un solde initial de 0.
+     * Crée un compte pour un nouvel utilisateur avec un solde initial de 0.
+     *
+     * @param user L'utilisateur pour lequel le compte est créé.
+     * @return Le compte créé ou existant.
      */
     @Transactional
     public Compte createCompteForUser(User user) {
@@ -39,7 +60,11 @@ public class CompteService {
     }
 
     /**
-     * Récupérer le compte d'un utilisateur.
+     * Récupère le compte d'un utilisateur.
+     *
+     * @param user L'utilisateur dont le compte est recherché.
+     * @return Le compte de l'utilisateur.
+     * @throws RuntimeException Si le compte est introuvable.
      */
     public Compte getCompteByUser(User user) {
         return compteRepository.findByUser(user)
@@ -47,10 +72,11 @@ public class CompteService {
     }
 
     /**
-     * Créditer le compte de l'utilisateur.
+     * Créditer le compte de l'utilisateur d'un montant donné.
      *
-     * @param user   L'utilisateur.
+     * @param user   L'utilisateur concerné.
      * @param amount Montant à créditer.
+     * @throws IllegalArgumentException Si le montant est inférieur ou égal à zéro.
      */
     @Transactional
     public void creditCompte(User user, BigDecimal amount) {
@@ -67,10 +93,12 @@ public class CompteService {
     }
 
     /**
-     * Débiter le compte de l'utilisateur.
+     * Débite le compte de l'utilisateur d'un montant donné.
      *
-     * @param user   L'utilisateur.
+     * @param user   L'utilisateur concerné.
      * @param amount Montant à débiter.
+     * @throws IllegalArgumentException Si le montant est inférieur ou égal à zéro.
+     * @throws RuntimeException         Si le solde est insuffisant.
      */
     @Transactional
     public void debitCompte(User user, BigDecimal amount) {
@@ -93,11 +121,11 @@ public class CompteService {
     }
 
     /**
-     * Vérifie si l'utilisateur a suffisamment de fonds.
+     * Vérifie si l'utilisateur a suffisamment de fonds pour effectuer une transaction.
      *
-     * @param user   L'utilisateur.
+     * @param user   L'utilisateur concerné.
      * @param amount Montant à vérifier.
-     * @return true si le solde est suffisant, sinon false.
+     * @return {@code true} si le solde est suffisant, sinon {@code false}.
      */
     public boolean hasSufficientFunds(User user, BigDecimal amount) {
         Compte compte = getCompteByUser(user);

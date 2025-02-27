@@ -10,8 +10,13 @@ import com.pay_my_buddy.service.CompteService;
 import com.pay_my_buddy.service.UserService;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
+/**
+ * Contrôleur REST pour la gestion des comptes utilisateurs.
+ * <p>
+ * Cette classe permet de consulter le solde, de créditer et de débiter un compte.
+ * </p>
+ */
 @RestController
 @RequestMapping("/comptes")
 public class CompteController {
@@ -19,13 +24,22 @@ public class CompteController {
     private final CompteService compteService;
     private final UserService userService;
 
+    /**
+     * Constructeur de la classe CompteController.
+     *
+     * @param compteService Service de gestion des comptes.
+     * @param userService   Service de gestion des utilisateurs.
+     */
     public CompteController(CompteService compteService, UserService userService) {
         this.compteService = compteService;
         this.userService = userService;
     }
 
     /**
-     * 📌 Consulter le solde du compte utilisateur connecté.
+     * Récupère le compte de l'utilisateur connecté.
+     *
+     * @param authentication Informations d'authentification de l'utilisateur connecté.
+     * @return {@link ResponseEntity} contenant les informations du compte ou un message d'erreur si introuvable.
      */
     @GetMapping
     public ResponseEntity<?> getCompteByUser(Authentication authentication) {
@@ -41,7 +55,11 @@ public class CompteController {
     }
 
     /**
-     * ➕ Ajouter du crédit au compte de l'utilisateur connecté.
+     * Ajoute du crédit au compte de l'utilisateur connecté.
+     *
+     * @param authentication Informations d'authentification de l'utilisateur connecté.
+     * @param amount         Montant à ajouter au compte.
+     * @return {@link ResponseEntity} contenant un message de succès ou d'erreur.
      */
     @PostMapping("/credit")
     public ResponseEntity<String> creditCompte(Authentication authentication, @RequestBody BigDecimal amount) {
@@ -61,7 +79,11 @@ public class CompteController {
     }
 
     /**
-     * ➖ Débiter le compte de l'utilisateur connecté.
+     * Débite le compte de l'utilisateur connecté.
+     *
+     * @param authentication Informations d'authentification de l'utilisateur connecté.
+     * @param amount         Montant à débiter du compte.
+     * @return {@link ResponseEntity} contenant un message de succès ou d'erreur.
      */
     @PostMapping("/debit")
     public ResponseEntity<String> debitCompte(Authentication authentication, @RequestBody BigDecimal amount) {
@@ -82,5 +104,4 @@ public class CompteController {
             return ResponseEntity.internalServerError().body("Une erreur est survenue lors du débit.");
         }
     }
-
 }
