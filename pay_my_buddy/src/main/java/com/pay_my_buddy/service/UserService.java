@@ -22,33 +22,12 @@ import java.util.List;
 @Service
 public class UserService {
 
-    /**
-     * Logger pour suivre les opérations effectuées sur les utilisateurs.
-     */
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    /**
-     * Référentiel des utilisateurs.
-     */
     private final UserRepository userRepository;
-
-    /**
-     * Encodeur de mot de passe utilisé pour sécuriser les mots de passe des utilisateurs.
-     */
     private final PasswordEncoder passwordEncoder;
-
-    /**
-     * Service de gestion des comptes associés aux utilisateurs.
-     */
     private final CompteService compteService;
 
-    /**
-     * Constructeur du service {@code UserService}.
-     *
-     * @param userRepository Référentiel des utilisateurs.
-     * @param passwordEncoder Encodeur de mot de passe.
-     * @param compteService Service de gestion des comptes bancaires.
-     */
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, CompteService compteService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -65,17 +44,13 @@ public class UserService {
      */
     @Transactional
     public User registerUser(User user) {
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Cet email est déjà utilisé.");
-        }
+        checkIfEmailExists(user.getEmail());
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
         User savedUser = userRepository.save(user);
         userRepository.flush();
 
         Compte compte = compteService.createCompteForUser(savedUser);
-        
         if (compte == null) {
             throw new RuntimeException("Erreur lors de la création du compte bancaire.");
         }
@@ -96,7 +71,6 @@ public class UserService {
         logger.info("Tentative de connexion pour l'email : {}", email);
 
         User user = getUserByEmail(email);
-
         if (!passwordEncoder.matches(password, user.getPassword())) {
             logger.warn("Échec d'authentification : mot de passe incorrect pour {}", email);
             throw new IllegalArgumentException("Email ou mot de passe incorrect.");
@@ -115,10 +89,7 @@ public class UserService {
      */
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    logger.error("Utilisateur introuvable avec l'email : {}", email);
-                    return new ResourceNotFoundException("Utilisateur non trouvé avec l'email : " + email);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'email : " + email));
     }
 
     /**
@@ -130,10 +101,7 @@ public class UserService {
      */
     public User getUserById(BigInteger id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.error("Utilisateur introuvable avec l'ID : {}", id);
-                    return new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + id);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + id));
     }
 
     /**
@@ -148,12 +116,7 @@ public class UserService {
         User user = getUserById(userId);
         User friend = getUserByEmail(friendEmail);
 
-        if (user.equals(friend)) {
-            throw new IllegalArgumentException("Vous ne pouvez pas vous ajouter vous-même.");
-        }
-        if (user.getFriends().contains(friend)) {
-            throw new IllegalArgumentException("Cet utilisateur est déjà dans votre liste d'amis.");
-        }
+        checkIfAlreadyFriends(user, friend);
 
         user.getFriends().add(friend);
         friend.getFriends().add(user);
@@ -211,9 +174,7 @@ public class UserService {
         User user = getUserById(userId);
 
         if (newEmail != null && !newEmail.equals(user.getEmail())) {
-            if (userRepository.findByEmail(newEmail).isPresent()) {
-                throw new IllegalArgumentException("Cet email est déjà utilisé.");
-            }
+            checkIfEmailExists(newEmail);
             user.setEmail(newEmail);
         }
 
@@ -242,4 +203,43 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
+
+    /**
+     * Vérifie si un email est déjà utilisé dans la base de données.
+     *
+     * @param email Email à vérifier.
+     * @throws IllegalArgumentException Si l'email est déjà enregistré.
+     */
+    private void checkIfEmailExists(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Cet email est déjà utilisé.");
+        }
+    }
+
+    /**
+     * Vérifie si deux utilisateurs sont déjà amis ou si l'utilisateur tente de s'ajouter lui-même.
+     *
+     * @param user   L'utilisateur qui veut ajouter un ami.
+     * @param friend L'ami potentiel à ajouter.
+     * @throws IllegalArgumentException Si l'utilisateur tente de s'ajouter lui-même ou si l'ami est déjà présent.
+     */
+    private void checkIfAlreadyFriends(User user, User friend) {
+        if (user.equals(friend)) {
+            throw new IllegalArgumentException("Vous ne pouvez pas vous ajouter vous-même.");
+        }
+        if (user.getFriends().contains(friend)) {
+            throw new IllegalArgumentException("Cet utilisateur est déjà dans votre liste d'amis.");
+        }
+    }
+    
+    /**
+     * Saves the user to the database.
+     *
+     * @param user the user to be saved.
+     * @return the saved user.
+     */
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
 }

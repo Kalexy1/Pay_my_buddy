@@ -44,7 +44,6 @@ public class CompteService {
      * @param user L'utilisateur pour lequel le compte est créé.
      * @return Le compte créé ou existant.
      */
-    @Transactional
     public Compte createCompteForUser(User user) {
         if (compteRepository.findByUser(user).isPresent()) {
             logger.warn("Un compte existe déjà pour {}", user.getEmail());
@@ -78,7 +77,6 @@ public class CompteService {
      * @param amount Montant à créditer.
      * @throws IllegalArgumentException Si le montant est inférieur ou égal à zéro.
      */
-    @Transactional
     public void creditCompte(User user, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             logger.warn("Tentative de crédit d'un montant non valide ({}) pour {}", amount, user.getEmail());
@@ -100,7 +98,6 @@ public class CompteService {
      * @throws IllegalArgumentException Si le montant est inférieur ou égal à zéro.
      * @throws RuntimeException         Si le solde est insuffisant.
      */
-    @Transactional
     public void debitCompte(User user, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             logger.warn("Tentative de débit d'un montant non valide ({}) pour {}", amount, user.getEmail());

@@ -1,7 +1,6 @@
 package com.pay_my_buddy.service;
 
 import com.pay_my_buddy.model.User;
-import com.pay_my_buddy.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -9,7 +8,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigInteger;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -17,7 +15,7 @@ import static org.mockito.Mockito.*;
 class ConnectionServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @InjectMocks
     private ConnectionService connectionService;
@@ -39,33 +37,36 @@ class ConnectionServiceTest {
 
     @Test
     void testAddConnection_Success() {
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(userRepository.findById(friend.getId())).thenReturn(Optional.of(friend));
+        when(userService.getUserById(user.getId())).thenReturn(user);
+        when(userService.getUserById(friend.getId())).thenReturn(friend);
 
         connectionService.addConnection(user.getId(), friend.getId());
 
         assertTrue(user.getFriends().contains(friend));
-        verify(userRepository).save(user);
+        assertTrue(friend.getFriends().contains(user));
+
+        verify(userService).saveUser(user);
+        verify(userService).saveUser(friend);
     }
 
     @Test
     void testAddConnection_UserNotFound() {
-        when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
+        when(userService.getUserById(user.getId())).thenThrow(new RuntimeException("Utilisateur non trouvé"));
 
-        Exception exception = assertThrows(RuntimeException.class, 
+        Exception exception = assertThrows(RuntimeException.class,
             () -> connectionService.addConnection(user.getId(), friend.getId()));
 
-        assertEquals("Utilisateur ou ami non trouvé", exception.getMessage());
+        assertEquals("Utilisateur non trouvé", exception.getMessage());
     }
 
     @Test
     void testAddConnection_FriendNotFound() {
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(userRepository.findById(friend.getId())).thenReturn(Optional.empty());
+        when(userService.getUserById(user.getId())).thenReturn(user);
+        when(userService.getUserById(friend.getId())).thenThrow(new RuntimeException("Ami non trouvé"));
 
-        Exception exception = assertThrows(RuntimeException.class, 
+        Exception exception = assertThrows(RuntimeException.class,
             () -> connectionService.addConnection(user.getId(), friend.getId()));
 
-        assertEquals("Utilisateur ou ami non trouvé", exception.getMessage());
+        assertEquals("Ami non trouvé", exception.getMessage());
     }
 }

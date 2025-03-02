@@ -13,7 +13,6 @@ import com.pay_my_buddy.exception.ResourceNotFoundException;
 import com.pay_my_buddy.model.Transaction;
 import com.pay_my_buddy.model.User;
 import com.pay_my_buddy.repository.TransactionRepository;
-import com.pay_my_buddy.repository.UserRepository;
 
 /**
  * Service gérant les transactions financières entre utilisateurs.
@@ -24,37 +23,16 @@ import com.pay_my_buddy.repository.UserRepository;
 @Service
 public class TransactionService {
 
-    /**
-     * Logger pour suivre les opérations de transaction.
-     */
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
-    /**
-     * Référentiel des transactions.
-     */
     private final TransactionRepository transactionRepository;
-
-    /**
-     * Service de gestion des comptes utilisateurs.
-     */
     private final CompteService compteService;
+    private final UserService userService;
 
-    /**
-     * Référentiel des utilisateurs.
-     */
-    private final UserRepository userRepository;
-
-    /**
-     * Constructeur du service {@code TransactionService}.
-     *
-     * @param transactionRepository Référentiel des transactions.
-     * @param compteService Service de gestion des comptes.
-     * @param userRepository Référentiel des utilisateurs.
-     */
-    public TransactionService(TransactionRepository transactionRepository, CompteService compteService, UserRepository userRepository) {
+    public TransactionService(TransactionRepository transactionRepository, CompteService compteService, UserService userService) {
         this.transactionRepository = transactionRepository;
         this.compteService = compteService;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     /**
@@ -70,36 +48,15 @@ public class TransactionService {
      */
     @Transactional
     public Transaction sendMoney(User sender, User receiver, BigDecimal amount, String description) {
-        try {
-            if (sender.equals(receiver)) {
-                throw new IllegalArgumentException("Impossible d'envoyer de l'argent à soi-même.");
-            }
-
-            BigDecimal totalAmount = amount;
-
-            if (!compteService.hasSufficientFunds(sender, totalAmount)) {
-                throw new IllegalArgumentException("Fonds insuffisants pour effectuer cette transaction.");
-            }
-
-            compteService.debitCompte(sender, totalAmount);
-            compteService.creditCompte(receiver, amount);
-
-            Transaction transaction = new Transaction();
-            transaction.setSender(sender);
-            transaction.setReceiver(receiver);
-            transaction.setAmount(amount);
-            transaction.setDescription(description);
-            transactionRepository.save(transaction);
-
-            logger.info("Transaction réussie de {} EUR de {} vers {}", amount, sender.getEmail(), receiver.getEmail());
-            return transaction;
-        } catch (IllegalArgumentException e) {
-            logger.warn("Échec de la transaction entre {} et {}: {}", sender.getEmail(), receiver.getEmail(), e.getMessage());
-            throw e; 
-        } catch (Exception e) {
-            logger.error("Erreur inattendue lors de la transaction entre {} et {}: {}", sender.getEmail(), receiver.getEmail(), e.getMessage());
-            throw new RuntimeException("Une erreur est survenue lors de la transaction.");
+        if (sender.equals(receiver)) {
+            throw new IllegalArgumentException("Impossible d'envoyer de l'argent à soi-même.");
         }
+
+        if (!compteService.hasSufficientFunds(sender, amount)) {
+            throw new IllegalArgumentException("Fonds insuffisants pour effectuer cette transaction.");
+        }
+
+        return createTransaction(sender, receiver, description, amount);
     }
 
     /**
@@ -112,24 +69,23 @@ public class TransactionService {
      * @return La transaction créée.
      * @throws IllegalArgumentException Si l'expéditeur et le destinataire sont identiques ou si les fonds sont insuffisants.
      */
-    public Transaction createTransaction(User sender, User receiver, String description, double amount) {
+    @Transactional
+    public Transaction createTransaction(User sender, User receiver, String description, BigDecimal amount) {
         if (sender.equals(receiver)) {
             throw new IllegalArgumentException("Impossible d'envoyer de l'argent à soi-même.");
         }
 
-        BigDecimal totalAmount = BigDecimal.valueOf(amount);
-
-        if (!compteService.hasSufficientFunds(sender, totalAmount)) {
+        if (!compteService.hasSufficientFunds(sender, amount)) {
             throw new IllegalArgumentException("Fonds insuffisants pour effectuer cette transaction.");
         }
 
-        compteService.debitCompte(sender, totalAmount);
-        compteService.creditCompte(receiver, BigDecimal.valueOf(amount));
+        compteService.debitCompte(sender, amount);
+        compteService.creditCompte(receiver, amount);
 
         Transaction transaction = new Transaction();
         transaction.setSender(sender);
         transaction.setReceiver(receiver);
-        transaction.setAmount(BigDecimal.valueOf(amount));
+        transaction.setAmount(amount);
         transaction.setDescription(description);
         transactionRepository.save(transaction);
 
@@ -145,8 +101,11 @@ public class TransactionService {
      * @throws ResourceNotFoundException Si l'utilisateur est introuvable.
      */
     public List<Transaction> getUserTransactions(BigInteger userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec ID : " + userId));
+        User user = userService.getUserById(userId);
+
+        if (user == null) {
+            throw new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + userId);
+        }
 
         return transactionRepository.findBySenderOrReceiver(user, user);
     }
